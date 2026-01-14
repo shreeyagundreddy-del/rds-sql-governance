@@ -3,7 +3,7 @@
 -- Layer: Raw
 -- Version: v1.0
 
-CREATE TABLE raw.trips (
+CREATE TABLE IF NOT EXISTS raw.trips (
     trip_id BIGINT PRIMARY KEY,
     pickup_ts TIMESTAMP,
     dropoff_ts TIMESTAMP,
