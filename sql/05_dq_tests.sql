@@ -1,13 +1,13 @@
--- Author: Shreeya
--- Purpose: SQL-based test
--- Layer: Testing
+-- Author: shreeya
+-- Purpose: DQ results table
+-- Layer: Data Quality
 -- Version: v1.0
 
-SELECT
-    rule_name,
-    CASE
-        WHEN failed_records = 0 THEN 'PASS'
-        ELSE 'FAIL'
-    END AS test_status,
-    checked_at
-FROM dq.results;
+CREATE SCHEMA IF NOT EXISTS dq;
+
+CREATE TABLE IF NOT EXISTS dq.results (
+    rule_name TEXT,
+    failed_records INT,
+    total_records INT,
+    checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
