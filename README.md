@@ -1,173 +1,66 @@
-# Data Pipeline with Schema Design, Transformations, and Data Quality (SQL)
+# SQL Layer – Data Modeling & Data Quality
 
 ## 📌 Overview
 
-This project demonstrates a structured data engineering workflow using SQL, focusing on schema design, transformation logic, and data quality validation. It simulates a production-style pipeline for processing trip data, ensuring data reliability and analytics readiness.
+This module implements the core SQL logic for data modeling, transformation, and data quality validation within the data platform. It follows a layered approach to ensure clean separation of raw, processed, and validated data.
 
 ---
 
 ## 🏗️ Architecture
 
-The pipeline follows a layered architecture:
+The SQL layer is structured into the following schemas:
 
-* **Raw Layer (`raw`)** → Stores ingested source data
-* **Curated Layer (`curated`)** → Contains transformed and enriched data
-* **Data Quality Layer (`dq`)** → Stores validation results
-* **Audit Layer (`audit`)** → Reserved for tracking and observability
-
----
-
-## 🗂️ Schema Design
-
-Schemas are created to logically separate concerns:
-
-```sql
-CREATE SCHEMA IF NOT EXISTS raw;
-CREATE SCHEMA IF NOT EXISTS curated;
-CREATE SCHEMA IF NOT EXISTS dq;
-CREATE SCHEMA IF NOT EXISTS audit;
-```
-
-This design improves:
-
-* Maintainability
-* Data governance
-* Query performance and clarity
+* **raw** → Stores ingested source data
+* **curated** → Contains transformed and enriched datasets
+* **dq** → Captures data quality validation results
+* **audit** → Reserved for monitoring and tracking
 
 ---
 
-## 📥 Raw Data Ingestion
+## 🔄 Data Processing
 
-The raw layer stores immutable trip data:
-
-```sql
-CREATE TABLE IF NOT EXISTS raw.trips (
-    trip_id BIGINT PRIMARY KEY,
-    pickup_ts TIMESTAMP,
-    dropoff_ts TIMESTAMP,
-    passenger_count INT,
-    total_amount NUMERIC
-);
-```
-
-✔️ Ensures:
-
-* Source-of-truth storage
-* Minimal transformation at ingestion
+* Raw trip data is stored in `raw.trips`
+* Transformations are applied using views (e.g., `curated.vw_trips_base`)
+* Derived metrics such as **trip duration** are calculated for analytics readiness
 
 ---
 
-## 🔄 Data Transformation
+## ✅ Data Quality
 
-A curated view is created to enrich raw data with derived metrics:
+A lightweight data quality framework is implemented to validate processed data.
 
-```sql
-CREATE OR REPLACE VIEW curated.vw_trips_base AS
-SELECT
-    trip_id,
-    pickup_ts,
-    dropoff_ts,
-    passenger_count,
-    total_amount,
-    (EXTRACT(EPOCH FROM dropoff_ts - pickup_ts)/60)::INT AS trip_duration_min
-FROM raw.trips;
-```
-
-### Key Transformation
-
-* Calculates **trip duration in minutes**
-* Prepares data for downstream analytics
+* Results stored in: `dq.results`
+* Example rule: Ensures **trip duration is positive**
+* Tracks failed records, total records, and validation timestamps
 
 ---
 
-## ✅ Data Quality Framework
+## 📂 SQL Components
 
-A simple but effective data quality framework is implemented.
-
-### DQ Results Table
-
-```sql
-CREATE TABLE IF NOT EXISTS dq.results (
-    rule_name TEXT,
-    failed_records INT,
-    total_records INT,
-    checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Validation Rule
-
-```sql
-INSERT INTO dq.results (
-    rule_name,
-    failed_records,
-    total_records,
-    checked_at
-)
-SELECT
-    'trip_duration_positive',
-    COUNT(*) FILTER (WHERE trip_duration_min <= 0),
-    COUNT(*),
-    CURRENT_TIMESTAMP
-FROM curated.vw_trips_base;
-```
-
-### What it checks:
-
-* Ensures **trip duration is always positive**
-* Captures:
-
-  * Failed records
-  * Total records
-  * Timestamp of validation
+* `01_create_schemas.sql` → Schema setup
+* `02_create_raw_tables.sql` → Raw table definition
+* `03_transform_trips_base.sql` → Transformation logic
+* `04_dq_trip_validations.sql` → Data quality checks
+* `05_dq_tests.sql` → DQ result storage
 
 ---
 
-## 🔍 Key Features
+## 🧠 Key Highlights
 
-* Layered schema design (raw → curated → dq)
-* Derived metrics for analytics readiness
-* Built-in data quality validation framework
-* Scalable and modular SQL structure
-* Production-style separation of concerns
-
----
-
-## 📊 Use Cases
-
-* Data validation pipelines
-* Analytical dataset preparation
-* Data quality monitoring
-* Foundation for BI or ML pipelines
-
----
-
-## 🧠 Concepts Demonstrated
-
-* Data modeling and schema design
-* ETL transformation logic in SQL
-* Data quality validation patterns
-* Layered data architecture
+* Layered data architecture (raw → curated → dq)
+* Modular and maintainable SQL design
+* Built-in data validation framework
+* Ready for downstream analytics and reporting
 
 ---
 
 ## 🛠️ Tech Stack
 
-* SQL (PostgreSQL / Redshift compatible)
-* Data modeling principles
-* Data quality frameworks
-
----
-
-## 🚀 Future Improvements
-
-* Add multiple DQ rules (null checks, range checks, anomaly detection)
-* Integrate with orchestration tools (Airflow)
-* Add audit logging and lineage tracking
-* Build dashboards for DQ monitoring
+* SQL (PostgreSQL / Amazon Redshift compatible)
+* Data modeling and transformation patterns
 
 ---
 
 ## 👤 Author
 
-Designed as a structured data engineering project to demonstrate best practices in schema design, transformation logic, and data quality enforcement.
+Part of a larger end-to-end data platform demonstrating scalable data engineering practices.
